@@ -336,3 +336,4 @@ H:\Universidad\Proyecto\obj\Debug\net9.0\refint\proyecto.dll
 H:\Universidad\Proyecto\obj\Debug\net9.0\proyecto.pdb
 H:\Universidad\Proyecto\obj\Debug\net9.0\proyecto.genruntimeconfig.cache
 H:\Universidad\Proyecto\obj\Debug\net9.0\ref\proyecto.dll
+H:\Universidad\Proyecto\obj\Debug\net9.0\proyecto.sourcelink.json
