@@ -1,0 +1,100 @@
+@page "/"
+@using proyecto.Models
+@using proyecto.Services
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.AspNetCore.Components.Authorization
+
+@inject RhdbContext DbContext
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+
+<div class="container mt-5 d-flex justify-content-center">
+    <div class="card p-4 shadow" style="width: 400px;">
+        <h3 class="text-center mb-4">Iniciar Sesión</h3>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @errorMessage
+            </div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Cuenta de usuario</label>
+            <input type="text"
+                   class="form-control"
+                   @bind="email"
+                   placeholder="Ej. admin" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="password"
+                   class="form-control"
+                   @bind="password"
+                   placeholder="••••••••" />
+        </div>
+
+        <button class="btn btn-primary w-100 mb-2"
+                @onclick="ProcesarLogin">
+            Ingresar
+        </button>
+
+        <button class="btn btn-link w-100"
+                @onclick="IrARegistro">
+            Crear una cuenta nueva
+        </button>
+    </div>
+</div>
+
+@code {
+
+    private string email = string.Empty;
+    private string password = string.Empty;
+    private string errorMessage = string.Empty;
+
+    private async Task ProcesarLogin()
+    {
+        // Limpiamos mensajes de error previos
+        errorMessage = string.Empty;
+
+        // 1. Validar que los campos no estén vacíos
+        if (string.IsNullOrWhiteSpace(email) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "Por favor, ingresa tu cuenta y contraseña.";
+            return;
+        }
+
+        // 2. Buscar al usuario en la base de datos
+        var usuario = await DbContext.Usuarios
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        // 3. Verificar si el usuario existe y si la contraseña es correcta usando BCrypt
+        if (usuario != null &&
+            BCrypt.Net.BCrypt.Verify(password, usuario.Password))
+        {
+            // 4. Iniciar sesión en memoria y notificar a Blazor
+            var customProvider = (CustomAuthStateProvider)AuthStateProvider;
+
+            customProvider.MarkUserAsAuthenticated(
+                usuario.Password,
+                usuario.IdRol.ToString());
+
+            // 5. Redirigir al inicio
+            NavigationManager.NavigateTo("/");
+        }
+        else
+        {
+            // Mostramos un mensaje genérico por seguridad
+            errorMessage = "Usuario o contraseña incorrectos.";
+        }
+    }
+
+    private void IrARegistro()
+    {
+        NavigationManager.NavigateTo("/register");
+    }
+}

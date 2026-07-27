@@ -1,0 +1,123 @@
+@page "/Register"
+@using proyecto.Models
+@using Microsoft.EntityFrameworkCore
+@inject RhdbContext DbContext
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<div class="container mt-5 d-flex justify-content-center">
+    <div class="card p-4 shadow" style="width: 400px;">
+        <h3 class="text-center mb-4">Crear Cuenta</h3>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @errorMessage
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(successMessage))
+        {
+            <div class="alert alert-success" role="alert">
+                @successMessage
+            </div>
+        }
+
+        <div class="mb-3">
+            <label class="form-label">Nombre</label>
+            <input type="text" class="form-control" @bind="nombre" placeholder="Ej. Juan Pérez" />
+        </div>
+<div class="mb-3">
+            <label class="form-label">Apellido</label>
+            <input type="text" class="form-control" @bind="apellido" placeholder="Ej. Juan Pérez" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="text" class="form-control" @bind="email" placeholder="Ej. jperez" />
+        </div>
+ <div class="mb-3">
+            <label class="form-label">telefono</label>
+            <input type="text" class="form-control" @bind="telefono" placeholder="Ej. jperez" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Contraseña</label>
+            <input type="password" class="form-control" @bind="password" placeholder="••••••••" />
+        </div>
+
+        <button class="btn btn-success w-100 mb-2" @onclick="ProcesarRegistro">Registrarse</button>
+        <button class="btn btn-link w-100" @onclick="IrALogin">Ya tengo una cuenta</button>
+    </div>
+</div>
+
+@code {
+
+    private string nombre = string.Empty;
+    private string apellido = string.Empty;
+    private string password = string.Empty;
+private string email=string.Empty;
+private string telefono=string.Empty;
+    private string errorMessage = string.Empty;
+    private string successMessage = string.Empty;
+
+    private async Task ProcesarRegistro()
+    {
+        // Limpiamos mensajes anteriores
+        errorMessage = string.Empty;
+        successMessage = string.Empty;
+
+        // 1. Validar que los campos no estén vacíos
+        if (string.IsNullOrWhiteSpace(nombre) ||
+            string.IsNullOrWhiteSpace(apellido) ||
+            string.IsNullOrWhiteSpace(password)||
+            string.IsNullOrWhiteSpace(email)||
+            string.IsNullOrWhiteSpace(telefono))
+        {
+            errorMessage = "Todos los campos son obligatorios.";
+            return;
+        }
+
+        // 2. Verificar si el usuario ya existe en la base de datos
+        var usuarioExistente = await DbContext.Usuarios
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        if (usuarioExistente != null)
+        {
+            errorMessage = "La cuenta de usuario ya está en uso. Elige otra.";
+            return;
+        }
+
+        // 3. Crear el nuevo usuario y cifrar la contraseña con BCrypt
+        var nuevoUsuario = new Usuario
+        {
+            Nombre = nombre,
+            Apellido= apellido,
+            Email=email,
+            Password = BCrypt.Net.BCrypt.HashPassword(password), // Aquí actúa la "licuadora"
+            Telefono=telefono
+        };
+
+        // 4. Guardar en la base de datos
+        try
+        {
+            DbContext.Usuarios.Add(nuevoUsuario);
+            await DbContext.SaveChangesAsync();
+
+            successMessage = "¡Cuenta creada exitosamente! Redirigiendo al login...";
+
+            // Esperamos 2 segundos para que el usuario lea el mensaje de éxito
+            await Task.Delay(2000);
+
+            // Redirigimos al Login
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception)
+        {
+            errorMessage = "Ocurrió un error al guardar en la base de datos.";
+        }
+    }
+
+    private void IrALogin()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+}

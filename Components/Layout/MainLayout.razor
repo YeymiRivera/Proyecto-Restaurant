@@ -1,0 +1,93 @@
+﻿@inherits LayoutComponentBase
+
+@using Microsoft.AspNetCore.Components.Authorization
+@using proyecto.Services
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+
+<div class="page">
+
+    <div class="sidebar">
+
+        <NavMenu />
+
+    </div>
+    <main>
+
+
+        <div class="top-row px-4">
+
+
+            <AuthorizeView>
+
+                <Authorized>
+
+
+                    <span class="me-3">
+
+                        Bienvenido,
+                        @context.User.Identity?.Name
+
+                    </span>
+
+                    <button class="btn btn-outline-danger btn-sm"
+                            @onclick="CerrarSesion">
+
+                        Cerrar Sesión
+
+                    </button>
+
+
+                </Authorized>
+
+
+                <NotAuthorized>
+
+
+                    <a class="btn btn-primary btn-sm"
+                       href="/">
+
+                        Iniciar Sesión
+
+                    </a>
+
+
+                </NotAuthorized>
+
+
+            </AuthorizeView>
+
+
+        </div>
+
+
+        <article class="content px-4">
+
+            @Body
+
+        </article>
+
+
+    </main>
+
+</div>
+
+
+@code {
+
+
+    private void CerrarSesion()
+    {
+
+        if (AuthStateProvider is CustomAuthStateProvider auth)
+        {
+
+            auth.MarkUserAsLoggedOut();
+
+        }
+        NavigationManager.NavigateTo("/login", true);
+
+    }
+
+}
