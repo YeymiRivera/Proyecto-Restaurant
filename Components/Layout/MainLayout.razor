@@ -1,10 +1,10 @@
 ﻿@inherits LayoutComponentBase
-
+@using proyecto.Models
 @using Microsoft.AspNetCore.Components.Authorization
 @using proyecto.Services
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
-
+@inject RhdbContext DbContext
 
 <div class="page">
 
@@ -86,7 +86,7 @@
             auth.MarkUserAsLoggedOut();
 
         }
-        NavigationManager.NavigateTo("/login", true);
+        NavigationManager.NavigateTo("/", true);
 
     }
 
