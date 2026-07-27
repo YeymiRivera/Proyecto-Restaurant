@@ -1,13 +1,25 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">proyecto</a>
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
-
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+<div class="nav-scrollable">
     <nav class="nav flex-column">
+<div>   
+        <AuthorizeView Roles="1">
+        <Authorized>
+            <NavLink href="/producto">
+                Gestión Productos
+            </NavLink>
+            <NavLink href="/Error">
+    Prueba
+</NavLink>
+        </Authorized>
+        <NotAuthorized></NotAuthorized>
+        </AuthorizeView>
+</div>
     </nav>
 </div>
-

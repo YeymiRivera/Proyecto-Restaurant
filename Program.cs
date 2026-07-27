@@ -8,14 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
+builder.Services.AddScoped<ProductoService>();
 // Registrar el DbContext
 builder.Services.AddDbContextFactory<RhdbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // 1. Sistema central de autorización 
 builder.Services.AddAuthorizationCore(); 
+builder.Services.AddAuthorization();
 
+builder.Services.AddAuthentication();
 // 2. Proveedor personalizado 
 builder.Services.AddScoped<CustomAuthStateProvider>(); 
 
@@ -35,7 +37,9 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapStaticAssets();

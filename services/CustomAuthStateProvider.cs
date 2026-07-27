@@ -10,11 +10,11 @@ public class CustomAuthStateProvider:AuthenticationStateProvider
     public CustomAuthStateProvider() { _currentUser = _anonymous; } 
     public override Task<AuthenticationState> GetAuthenticationStateAsync() => 
     Task.FromResult(new AuthenticationState(_currentUser)); 
-    public void MarkUserAsAuthenticated(string username, string rol) 
+    public void MarkUserAsAuthenticated(string email, string id_rol) 
     {
          var identity = new ClaimsIdentity(new[] 
-         { new Claim(ClaimTypes.Name, username), 
-         new Claim(ClaimTypes.Role, rol) }
+         { new Claim(ClaimTypes.Email, email), 
+         new Claim(ClaimTypes.Role, id_rol) }
           , "CustomAuthCervantes"); 
           _currentUser = new ClaimsPrincipal(identity); 
           NotifyAuthenticationStateChanged(GetAuthenticationStateAsync()); 

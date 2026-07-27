@@ -20,7 +20,15 @@
                 @errorMessage
             </div>
         }
+<AuthorizeView>
+    <Authorized>
+        <h4>Usuario autenticado</h4>
+    </Authorized>
 
+    <NotAuthorized>
+        <h4>No autenticado</h4>
+    </NotAuthorized>
+</AuthorizeView>
         <div class="mb-3">
             <label class="form-label">Cuenta de usuario</label>
             <input type="text"
@@ -76,11 +84,12 @@
         if (usuario != null &&
             BCrypt.Net.BCrypt.Verify(password, usuario.Password))
         {
+            
             // 4. Iniciar sesión en memoria y notificar a Blazor
             var customProvider = (CustomAuthStateProvider)AuthStateProvider;
 
             customProvider.MarkUserAsAuthenticated(
-                usuario.Password,
+                usuario.Email,
                 usuario.IdRol.ToString());
 
             // 5. Redirigir al inicio

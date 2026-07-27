@@ -1,0 +1,142 @@
+  @page "/producto"
+    @using proyecto.Models
+    @using proyecto.Services
+    @inject ProductoService ProductoService
+    @inject RhdbContext Context
+    @rendermode InteractiveServer
+    <h3>Gestión de Productos</h3>
+    <div class="card p-3 mb-4">
+        <h5>Nuevo Plato</h5>
+        <div class="mb-3">
+            <label class="form-label">
+                Nombre del plato
+            </label>
+
+            <input class="form-control"
+                @bind="NuevoProducto.Nombre" />
+
+        </div>
+        <div class="mb-3">
+
+            <label class="form-label">
+                Descripción
+            </label>
+
+            <textarea class="form-control"
+                    @bind="NuevoProducto.Descripcion">
+            </textarea>
+        </div>
+        <div class="mb-3">
+
+            <label class="form-label">
+                Precio
+            </label>
+            <input type="number"
+                class="form-control"
+                @bind="NuevoProducto.Precio" />
+
+        </div>
+        <div class="mb-3">
+
+            <label class="form-label">
+                Categoría
+            </label>
+            <select class="form-select"
+                    @bind="NuevoProducto.IdCategoria">
+                <option value="0">
+                    Seleccione categoría
+                </option>
+                @foreach(var categoria in Categorias)
+                {
+
+                    <option value="@categoria.IdCategoria">
+                        @categoria.Nombre
+                    </option>
+                }
+            </select>
+        </div>
+        <button class="btn btn-primary"
+                @onclick="GuardarProducto">
+            Guardar Plato
+        </button>
+    </div>
+    <hr />
+    <h4>
+        Productos registrados
+    </h4>
+    <table class="table table-striped">
+
+    <thead>
+    <tr>
+    <th>
+    Nombre
+    </th>
+    <th>
+    Precio
+    </th>
+    <th>
+    Estado
+    </th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach(var producto in Productos)
+    {
+    <tr>
+    <td>
+    @producto.Nombre
+    </td>
+    <td>
+    @producto.Precio.ToString("C")
+    </td>
+    <td>
+
+    @if(producto.Estado)
+    {
+        <span class="badge bg-success">
+            Disponible
+        </span>
+    }
+    else
+    {
+        <span class="badge bg-danger">
+            Inactivo
+        </span>
+    }
+    </td>
+    </tr>
+    }
+    </tbody>
+    </table>
+    @code {
+        private Producto NuevoProducto = new();
+
+        private List<Producto> Productos = new();
+        private List<Categorium> Categorias = new();
+
+        protected override async Task OnInitializedAsync()
+        {
+          try
+    {
+        Productos = await ProductoService.ObtenerProductos();
+        Categorias = await ProductoService.ObtenerCategorias();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.ToString());
+        throw;
+    }
+        }
+        private async Task GuardarProducto()
+        {
+            NuevoProducto.Estado = true;
+            await ProductoService
+                .CrearProducto(NuevoProducto);
+            Productos =
+                await ProductoService
+                .ObtenerProductos();
+            NuevoProducto = new();
+
+        }
+
+    }
