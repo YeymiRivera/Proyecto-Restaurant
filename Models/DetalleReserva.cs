@@ -7,6 +7,8 @@ using Microsoft.EntityFrameworkCore;
 namespace proyecto.Models;
 
 [Table("detalle_reserva")]
+[Index("IdMesa", Name = "idx_detalle_reserva_mesa")]
+[Index("IdReserva", Name = "idx_detalle_reserva_reserva")]
 [Index("IdReserva", "IdMesa", Name = "uq_reserva_mesa", IsUnique = true)]
 public partial class DetalleReserva
 {

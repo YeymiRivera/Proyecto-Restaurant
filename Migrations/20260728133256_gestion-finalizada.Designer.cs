@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using proyecto.Models;
@@ -11,9 +12,11 @@ using proyecto.Models;
 namespace proyecto.Migrations
 {
     [DbContext(typeof(RhdbContext))]
-    partial class RhdbContextModelSnapshot : ModelSnapshot
+    [Migration("20260728133256_gestion-finalizada")]
+    partial class gestionfinalizada
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

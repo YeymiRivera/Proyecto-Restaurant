@@ -7,14 +7,15 @@ public class CustomAuthStateProvider:AuthenticationStateProvider
 {
     private readonly ClaimsPrincipal _anonymous = new(new ClaimsIdentity()); 
     private ClaimsPrincipal _currentUser; 
+     ClaimsIdentity? identity;
     public CustomAuthStateProvider() { _currentUser = _anonymous; } 
     public override Task<AuthenticationState> GetAuthenticationStateAsync() => 
     Task.FromResult(new AuthenticationState(_currentUser)); 
-    public void MarkUserAsAuthenticated(string email, string id_rol) 
+    public void MarkUserAsAuthenticated(string email, string id_rol,string name) 
     {
-         var identity = new ClaimsIdentity(new[] 
+          identity = new ClaimsIdentity(new[] 
          { new Claim(ClaimTypes.Email, email), 
-         new Claim(ClaimTypes.Role, id_rol) }
+         new Claim(ClaimTypes.Role, id_rol),new Claim(ClaimTypes.Name, name) }
           , "CustomAuthCervantes"); 
           _currentUser = new ClaimsPrincipal(identity); 
           NotifyAuthenticationStateChanged(GetAuthenticationStateAsync()); 

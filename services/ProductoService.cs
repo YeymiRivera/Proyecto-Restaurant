@@ -40,7 +40,7 @@ namespace proyecto.Services
                 );
         }
         // Actualizar producto
-        public async Task ActualizarProducto(Producto producto)
+public async Task ActualizarProducto(Producto producto)
 {
 var productoExistente = await _context.Productos
     .FirstOrDefaultAsync(p => p.IdProducto == producto.IdProducto);
@@ -48,12 +48,9 @@ var productoExistente = await _context.Productos
     productoExistente.Descripcion = producto.Descripcion;
     productoExistente.Precio = producto.Precio;
     productoExistente.IdCategoria = producto.IdCategoria;
+    productoExistente.Image = producto.Image;
 // Modificar propiedades
 await _context.SaveChangesAsync();
-        
-        
-    
-   
 }
         // Eliminar producto (borrado lógico)
         public async Task EliminarProducto(int id)

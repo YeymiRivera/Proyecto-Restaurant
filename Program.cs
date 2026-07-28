@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddScoped<ProductoService>();
+builder.Services.AddScoped<MenuService>();
 // Registrar el DbContext
 builder.Services.AddDbContextFactory<RhdbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

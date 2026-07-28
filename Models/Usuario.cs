@@ -38,14 +38,14 @@ public partial class Usuario
     public bool Estado { get; set; }
 
     [Column("id_rol")]
-    public int IdRol { get; set; }
+    public int? IdRol { get; set; }
 
     [InverseProperty("IdUsuarioNavigation")]
     public virtual ICollection<Delivery> Deliveries { get; set; } = new List<Delivery>();
 
     [ForeignKey("IdRol")]
     [InverseProperty("Usuarios")]
-    public virtual Rol IdRolNavigation { get; set; } = null!;
+    public virtual Rol? IdRolNavigation { get; set; }
 
     [InverseProperty("IdUsuarioNavigation")]
     public virtual ICollection<Pedido> Pedidos { get; set; } = new List<Pedido>();

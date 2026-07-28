@@ -31,6 +31,10 @@ public partial class Producto
     [Column("id_categoria")]
     public int IdCategoria { get; set; }
 
+    [Column("image")]
+    [StringLength(1000)]
+    public string? Image { get; set; }
+
     [InverseProperty("IdProductoNavigation")]
     public virtual ICollection<DetalleMenuDiario> DetalleMenuDiarios { get; set; } = new List<DetalleMenuDiario>();
 

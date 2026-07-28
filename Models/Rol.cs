@@ -24,4 +24,8 @@ public partial class Rol
 
     [InverseProperty("IdRolNavigation")]
     public virtual ICollection<Usuario> Usuarios { get; set; } = new List<Usuario>();
+
+    [ForeignKey("IdRol")]
+    [InverseProperty("IdRols")]
+    public virtual ICollection<MenuItem> IdMenus { get; set; } = new List<MenuItem>();
 }

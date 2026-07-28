@@ -4,6 +4,7 @@
 @using proyecto.Services
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager NavigationManager
+@inject CustomAuthStateProvider customProvider
 @inject RhdbContext DbContext
 
 <div class="page">
@@ -14,23 +15,17 @@
 
     </div>
     <main>
-
-
         <div class="top-row px-4">
 
 
             <AuthorizeView>
 
                 <Authorized>
-
-
                     <span class="me-3">
 
-                        Bienvenido,
-                        @context.User.Identity?.Name
+                        Bienvenido @context.User.Identity?.Name.ToUpper()
 
                     </span>
-
                     <button class="btn btn-outline-danger btn-sm"
                             @onclick="CerrarSesion">
 
@@ -67,8 +62,6 @@
             @Body
 
         </article>
-
-
     </main>
 
 </div>
@@ -90,4 +83,5 @@
 
     }
 
+    }
 }

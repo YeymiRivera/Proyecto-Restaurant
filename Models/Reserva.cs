@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace proyecto.Models;
 
 [Table("reserva")]
+[Index("IdUsuario", Name = "idx_reserva_usuario")]
 public partial class Reserva
 {
     [Key]
