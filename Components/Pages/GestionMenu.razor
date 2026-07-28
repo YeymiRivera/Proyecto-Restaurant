@@ -1,0 +1,185 @@
+@page "/menu"
+@using proyecto.Models
+@using proyecto.Services
+@inject MenuService MenuService
+@rendermode InteractiveServer
+<h3>Creación de Menú Diario</h3>
+<div class="card p-4 mb-4">
+    <div class="mb-3">
+       <select class="form-select"
+        @bind="NuevoMenu.MenuDia"
+        @bind:after="CargarMenu">
+<option value="0">
+    Seleccione un dia para el menú
+</option>
+@foreach(var dia in DiasDisponibles)
+{
+<option value="@dia">
+    @dia
+</option>
+}
+</select>
+    </div>
+</div>
+<div class="card p-4 mb-4">
+<h5>
+    Agregar platos al menú
+</h5>
+<div class="row">
+<div class="col-md-8">
+<select class="form-select"
+        @bind="IdProductoSeleccionado">
+<option value="0">
+    Seleccione un plato
+</option>
+@foreach(var producto in Productos)
+{
+<option value="@producto.IdProducto">
+    @producto.Nombre -
+    @producto.Precio.ToString("C")
+</option>
+}
+</select>
+</div>
+<div class="col-md-4">
+<button class="btn btn-success"
+        @onclick="AgregarProducto">
+Agregar plato
+</button>
+</div>
+</div>
+</div>
+<hr />
+<h4>
+    Platos seleccionados para el menú
+</h4>
+<table class="table table-striped">
+<thead>
+<tr>
+<th>
+Plato
+</th>
+<th>
+Categoría
+</th>
+<th>
+Precio
+</th>
+<th>
+Acción
+</th>
+</tr>
+</thead>
+<tbody>
+@if(ProductosSeleccionados.Count == 0)
+{
+<tr>
+<td colspan="4" class="text-center">
+No hay platos agregados
+</td>
+</tr>
+}
+@foreach(var producto in ProductosSeleccionados)
+{
+<tr>
+<td>
+@producto.Nombre
+</td>
+<td>
+@producto.IdCategoriaNavigation?.Nombre
+</td>
+<td>
+@producto.Precio.ToString("C")
+</td>
+<td>
+<button class="btn btn-danger btn-sm"
+        @onclick="()=>EliminarProducto(producto)">
+Quitar
+</button>
+</td>
+</tr>
+}
+</tbody>
+</table>
+<button class="btn btn-primary"
+        @onclick="GuardarMenu">
+Guardar Menú
+</button>
+@if(!string.IsNullOrEmpty(Mensaje))
+{
+<div class="alert alert-info mt-3">
+@Mensaje
+</div>
+}
+@code {
+private MenuDiario NuevoMenu = new();
+private List<Producto> Productos = new();
+private List<string> DiasDisponibles = new() { "Lunes", "Martes", "Miércoles", "Jueves", "Viernes" };
+private List<Producto> ProductosSeleccionados = new();
+private int IdProductoSeleccionado;
+private string Mensaje = "";
+// Carga los productos del menú cuando se selecciona un día
+private async Task CargarMenu()
+{
+    ProductosSeleccionados =
+        await MenuService.ObtenerProductosDelMenu(
+            NuevoMenu.MenuDia.ToString()
+        );
+}
+// Carga los productos disponibles al iniciar el componente
+protected override async Task OnInitializedAsync()
+{
+    Productos =
+        await MenuService.ObtenerProductosDisponibles();
+}
+// Agrega productos a una lista temporal
+private void AgregarProducto()
+{
+    var producto =
+        Productos.FirstOrDefault(
+            p => p.IdProducto == IdProductoSeleccionado
+        );
+    if(producto != null)
+    {
+        bool existe =
+            ProductosSeleccionados.Any(
+                p => p.IdProducto == producto.IdProducto
+            );
+        if(!existe)
+        {
+            ProductosSeleccionados.Add(producto);
+        }
+    }
+    IdProductoSeleccionado = 0;
+}
+// Elimina solamente de la lista temporal
+private void EliminarProducto(Producto producto)
+{
+    ProductosSeleccionados.Remove(producto);
+}
+private async Task GuardarMenu()
+{
+    Mensaje = "";
+    if(string.IsNullOrWhiteSpace(NuevoMenu.MenuDia))
+    {
+        Mensaje = 
+       "Debe seleccionar un Dia para el menú.";
+        return;
+    }
+    if(ProductosSeleccionados.Count == 0)
+    {
+      Mensaje =
+        "Debe agregar al menos un plato al menú.";
+      return;
+    }
+    await MenuService.GuardarMenuCompleto(
+        NuevoMenu,
+        ProductosSeleccionados
+    );
+    Mensaje =
+    "Menú guardado correctamente.";
+    NuevoMenu = new MenuDiario();
+    ProductosSeleccionados.Clear();
+}
+
+}

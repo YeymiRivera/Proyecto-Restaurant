@@ -22,7 +22,21 @@ namespace proyecto.Services
                 .OrderBy(m => m.MenuDia)
                 .ToListAsync();
         }
+public async Task<List<Producto>> ObtenerProductosDelMenu(string dia)
+{
+    var menu = await _context.MenuDiarios
+        .FirstOrDefaultAsync(m => m.MenuDia == dia);
 
+    if (menu == null)
+        return new List<Producto>();
+
+    return await _context.DetalleMenuDiarios
+        .Where(d => d.IdMenuDiario == menu.IdMenuDiario)
+        .Include(d => d.IdProductoNavigation)
+            .ThenInclude(p => p.IdCategoriaNavigation)
+        .Select(d => d.IdProductoNavigation)
+        .ToListAsync();
+}
         public async Task<MenuDiario?> ObtenerMenuPorId(int id)
         {
             return await _context.MenuDiarios
@@ -47,11 +61,52 @@ namespace proyecto.Services
 
             return menu;
         }
+public async Task<MenuDiario> GuardarMenuCompleto(MenuDiario menu,List<Producto> productosSeleccionados)
+{
 
+    MenuDiario? menuExistente =
+        await ObtenerMenuPorDia(menu.MenuDia);
+    // Si no existe se crea
+    if(menuExistente == null)
+    {
+        menuExistente =await CrearMenu(menu.MenuDia);
+    }
+    int idMenu = menuExistente.IdMenuDiario;
+    // Obtener productos actuales del menú
+    var detallesActuales =await _context.DetalleMenuDiarios
+        .Where(d => d.IdMenuDiario == idMenu)
+        .ToListAsync();
+    // ================================
+    // ELIMINAR PRODUCTOS QUITADOS
+    // ===============================
+    foreach(var detalle in detallesActuales)
+    {
+        bool sigueExistiendo =productosSeleccionados.Any(p =>p.IdProducto ==
+                detalle.IdProducto
+            );
+        if(!sigueExistiendo)
+        {
+            _context.DetalleMenuDiarios
+                .Remove(detalle);
+        }
+
+    }
+    await _context.SaveChangesAsync();
+    // ================================
+    // AGREGAR PRODUCTOS NUEVOS
+    // ================================
+    foreach(var producto in productosSeleccionados)
+    {
+        await AgregarProducto(
+            idMenu,
+            producto.IdProducto
+        );
+    }
+    return menuExistente;
+}
         //==========================================
         // DETALLE MENÚ
         //==========================================
-
         public async Task<List<DetalleMenuDiario>> ObtenerDetalleMenu(int idMenu)
         {
             return await _context.DetalleMenuDiarios
@@ -60,7 +115,6 @@ namespace proyecto.Services
                 .ThenInclude(p => p.IdCategoriaNavigation)
                 .ToListAsync();
         }
-
         public async Task AgregarProducto(int idMenu, int idProducto)
         {
             bool existe = await _context.DetalleMenuDiarios.AnyAsync(d =>
@@ -114,11 +168,9 @@ namespace proyecto.Services
 
             await _context.SaveChangesAsync();
         }
-
         //==========================================
         // PRODUCTOS DISPONIBLES
         //==========================================
-
         public async Task<List<Producto>> ObtenerProductosDisponibles()
         {
             return await _context.Productos
