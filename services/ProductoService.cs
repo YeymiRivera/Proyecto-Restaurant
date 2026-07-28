@@ -13,8 +13,9 @@ namespace proyecto.Services
         // Obtener todos los productos
         public async Task<List<Producto>> ObtenerProductos()
         {
-            return await _context.Productos.Include(p => p.IdCategoriaNavigation)
-                .ToListAsync();
+            return await _context.Productos
+        .AsNoTracking()
+        .ToListAsync();
         }
         // Obtener categorías para el combobox
         public async Task<List<Categorium>> ObtenerCategorias()
@@ -40,10 +41,20 @@ namespace proyecto.Services
         }
         // Actualizar producto
         public async Task ActualizarProducto(Producto producto)
-        {
-            _context.Productos.Update(producto);
-            await _context.SaveChangesAsync();
-        }
+{
+var productoExistente = await _context.Productos
+    .FirstOrDefaultAsync(p => p.IdProducto == producto.IdProducto);
+    productoExistente.Nombre = producto.Nombre;
+    productoExistente.Descripcion = producto.Descripcion;
+    productoExistente.Precio = producto.Precio;
+    productoExistente.IdCategoria = producto.IdCategoria;
+// Modificar propiedades
+await _context.SaveChangesAsync();
+        
+        
+    
+   
+}
         // Eliminar producto (borrado lógico)
         public async Task EliminarProducto(int id)
         {
