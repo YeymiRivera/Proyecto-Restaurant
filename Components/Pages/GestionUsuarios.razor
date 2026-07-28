@@ -1,0 +1,280 @@
+@page "/usuarios"
+
+@using proyecto.Models
+@using Microsoft.EntityFrameworkCore
+
+@inject RhdbContext db
+
+<h2>Gestionar Usuarios</h2>
+
+<hr />
+
+<div class="row">
+
+    <div class="col-md-5">
+
+        <input class="form-control"
+               placeholder="Buscar usuario..."
+               @bind="buscar"
+               @bind:event="oninput" />
+
+        <br />
+
+        <button class="btn btn-success"
+                @onclick="Nuevo">
+            Nuevo Usuario
+        </button>
+
+        <br />
+        <br />
+
+        <table class="table table-bordered">
+
+            <thead>
+
+                <tr>
+
+                    <th>Nombre</th>
+
+                    <th>Email</th>
+
+                    <th>Rol</th>
+
+                    <th></th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                @foreach(var u in ListaFiltrada)
+
+                {
+
+                    <tr>
+
+                        <td>@u.Nombre @u.Apellido</td>
+
+                        <td>@u.Email</td>
+
+                        <td>@u.IdRol</td>
+
+                        <td>
+
+                            <button class="btn btn-primary btn-sm"
+                                    @onclick="(()=>Editar(u))">
+
+                                Editar
+
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                }
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    <div class="col-md-7">
+
+        <EditForm Model="usuario"
+                  OnValidSubmit="Guardar">
+
+            <DataAnnotationsValidator />
+
+            <ValidationSummary />
+
+            <div class="mb-3">
+
+                <label>Nombre</label>
+
+                <InputText class="form-control"
+                           @bind-Value="usuario.Nombre"/>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label>Apellido</label>
+
+                <InputText class="form-control"
+                           @bind-Value="usuario.Apellido"/>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label>Email</label>
+
+                <InputText class="form-control"
+                           @bind-Value="usuario.Email"/>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label>Password</label>
+
+                <InputText class="form-control"
+                           @bind-Value="usuario.Password"/>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label>Telefono</label>
+
+                <InputText class="form-control"
+                           @bind-Value="usuario.Telefono"/>
+
+            </div>
+
+            <div class="mb-3">
+
+                <label>Rol</label>
+
+                <InputNumber class="form-control"
+                             @bind-Value="usuario.IdRol"/>
+
+            </div>
+
+            <div class="mb-3">
+
+                <InputCheckbox
+                    @bind-Value="usuario.Estado"/>
+
+                Activo
+
+            </div>
+
+            <button class="btn btn-success">
+
+                Guardar
+
+            </button>
+
+            <button type="button"
+                    class="btn btn-secondary ms-2"
+                    @onclick="Nuevo">
+
+                Cancelar
+
+            </button>
+
+            @if(usuario.IdUsuario!=0)
+
+            {
+
+                <button type="button"
+                        class="btn btn-danger ms-2"
+                        @onclick="Eliminar">
+
+                    Eliminar
+
+                </button>
+
+            }
+
+        </EditForm>
+
+    </div>
+
+</div>
+
+@code{
+
+    List<Usuario> usuarios = new();
+
+    Usuario usuario = new();
+
+    string buscar = "";
+
+    IEnumerable<Usuario> ListaFiltrada =>
+        usuarios.Where(x =>
+        (x.Nombre + " " + x.Apellido)
+        .ToLower()
+        .Contains(buscar.ToLower()));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Cargar();
+    }
+
+    async Task Cargar()
+    {
+        usuarios = await db.Usuarios
+            .OrderBy(x=>x.Nombre)
+            .ToListAsync();
+    }
+
+    void Nuevo()
+    {
+        usuario = new Usuario()
+        {
+            Estado = true,
+            IdRol = 1
+        };
+    }
+
+    void Editar(Usuario u)
+    {
+        usuario = new Usuario()
+        {
+            IdUsuario = u.IdUsuario,
+            Nombre = u.Nombre,
+            Apellido = u.Apellido,
+            Email = u.Email,
+            Password = u.Password,
+            Telefono = u.Telefono,
+            Estado = u.Estado,
+            IdRol = u.IdRol
+        };
+    }
+
+    async Task Guardar()
+    {
+
+        if(usuario.IdUsuario==0)
+
+            db.Usuarios.Add(usuario);
+
+        else
+
+            db.Usuarios.Update(usuario);
+
+        await db.SaveChangesAsync();
+
+        await Cargar();
+
+        Nuevo();
+
+    }
+
+    async Task Eliminar()
+    {
+
+        var u = await db.Usuarios.FindAsync(usuario.IdUsuario);
+
+        if(u!=null)
+
+        {
+
+            db.Usuarios.Remove(u);
+
+            await db.SaveChangesAsync();
+
+        }
+
+        await Cargar();
+
+        Nuevo();
+
+    }
+
+}

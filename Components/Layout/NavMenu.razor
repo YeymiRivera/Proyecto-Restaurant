@@ -12,13 +12,26 @@
         <AuthorizeView Roles="1">
         <Authorized>
             <NavLink href="/producto">
+            <span class="bi bi-people"></span>
                 Gestión Productos
             </NavLink>
             <NavLink href="/menu">
+            <span class="bi bi-people"></span>
                 Gestion Menú
             </NavLink>
+             <NavLink href="/usuarios">
+                        <span class="bi bi-people"></span>
+                        Gestionar Usuarios
+            </NavLink>
         </Authorized>
-        <NotAuthorized></NotAuthorized>
+        </AuthorizeView>
+        <AuthorizeView Roles="2">
+        <Authorized>
+            <NavLink href="/menudia">
+            <span class="bi bi-people"></span>
+               Menu del día
+            </NavLink>
+        </Authorized>
         </AuthorizeView>
 </div>
     </nav>

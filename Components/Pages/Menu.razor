@@ -1,0 +1,117 @@
+@page "/menudia"
+@using proyecto.Models
+@using proyecto.Services
+@inject MenuService MenuService
+@rendermode InteractiveServer
+<h3 class="mb-4">Menú del Día</h3>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <label class="form-label">
+            Seleccione un día
+        </label>
+        <select class="form-select"
+                @bind="DiaSeleccionado"
+                @bind:after="CargarMenu">
+            <option value="">
+                -- Seleccione un día --
+            </option>
+            @foreach (var dia in DiasDisponibles)
+            {
+                <option value="@dia">
+                    @dia
+                </option>
+            }
+        </select>
+    </div>
+</div>
+
+@if (!string.IsNullOrWhiteSpace(Mensaje))
+{
+    <div class="alert alert-info">
+        @Mensaje
+    </div>
+}
+
+@if (Productos.Count > 0)
+{
+    <div class="row">
+        @foreach (var producto in Productos)
+        {
+            <div class="col-lg-4 col-md-6 mb-4">
+
+                <div class="card h-100 shadow">
+
+                    <img src="@(!string.IsNullOrWhiteSpace(producto.Image)
+                                ? producto.Image
+                                : "https://via.placeholder.com/500x300?text=Sin+Imagen")"
+                         class="card-img-top"
+                          style="height:250px;width:100%;object-fit:contain;background-color:#f8f9fa;"
+                         alt="@producto.Nombre" />
+                    <div class="card-body">
+                        <h4 class="card-title">
+                            @producto.Nombre
+                        </h4>
+                        <p class="card-text">
+                            @producto.Descripcion
+                        </p>
+                        <p class="text-muted">
+                            Categoría:
+                            <strong>
+                                @producto.IdCategoriaNavigation?.Nombre
+                            </strong>
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white">
+
+                        <h4 class="text-success">
+                            @producto.Precio.ToString("C")
+                        </h4>
+
+                    </div>
+
+                </div>
+
+            </div>
+        }
+
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(DiaSeleccionado))
+{
+    <div class="alert alert-warning">
+
+        No existen platos registrados para el menú de
+        <strong>@DiaSeleccionado</strong>.
+
+    </div>
+}
+
+@code
+{
+    private List<Producto> Productos = new();
+
+    private string DiaSeleccionado = "";
+
+    private string Mensaje = "";
+
+    private List<string> DiasDisponibles = new()
+    {
+        "Lunes",
+        "Martes",
+        "Miércoles",
+        "Jueves",
+        "Viernes"
+    };
+
+    private async Task CargarMenu()
+    {
+        Mensaje = "";
+
+        Productos = await MenuService.ObtenerProductosDelMenu(DiaSeleccionado);
+
+        if (Productos.Count == 0)
+        {
+            Mensaje = "No existe un menú registrado para ese día.";
+        }
+    }
+}
