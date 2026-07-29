@@ -93,6 +93,39 @@ namespace proyecto.Services
             }
         }
         //=====================================================
+// MESAS DE RESERVA EN CURSO
+//=====================================================
+public async Task<List<Mesa>> ObtenerMesasReservadasCliente(int idCliente)
+{
+    return await _context.DetalleReservas
+        .Where(r =>
+            r.IdReservaNavigation.IdUsuario == idCliente &&
+            r.IdReservaNavigation.Estado == "En Curso")
+        .Select(r => r.IdMesaNavigation)
+        .Distinct()
+        .OrderBy(m => m.NumeroMesa)
+        .ToListAsync();
+}
+        public async Task<bool> ClienteTieneReservaEnCurso(int idCliente)
+{
+    return await _context.DetalleReservas
+        .AnyAsync(r =>
+            r.IdReservaNavigation.IdUsuario == idCliente &&
+            r.IdReservaNavigation.Estado == "En Curso");
+}
+        public async Task<List<Mesa>> ObtenerMesasDelCliente(int idCliente)
+        {
+        return await _context.Pedidos
+        .Where(p =>
+            p.IdUsuario == idCliente &&
+            p.Estado != "Pagado" &&
+            p.Estado != "Cancelado")
+        .Select(p => p.IdMesaNavigation!)
+        .Distinct()
+        .OrderBy(m => m.NumeroMesa)
+        .ToListAsync();
+        }
+        //=====================================================
         // DETALLE PEDIDO
         //=====================================================
         public async Task<List<DetallePedido>> ObtenerDetallePedido(int idPedido)

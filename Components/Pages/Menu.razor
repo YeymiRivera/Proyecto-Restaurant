@@ -6,7 +6,7 @@
 @rendermode InteractiveServer
 <h3 class="mb-4">Menú del Día</h3>
 <div class="d-flex justify-content-between align-items-center mb-4">
-    @if(!ModoPedido)
+    @if (!ModoPedido)
     {
         <button class="btn btn-success"
                 @onclick="ActivarPedido">
@@ -18,12 +18,12 @@
         <div>
             <button class="btn btn-secondary me-2"
                     @onclick="CancelarPedido">
-                Cancelar
+                    Cancelar
             </button>
             <button class="btn btn-primary"
-        @onclick="ConfirmarPedido">
-    Confirmar Pedido
-</button>
+            @onclick="ConfirmarPedido">
+            Confirmar Pedido
+            </button>
         </div>
     }
 </div>
@@ -35,46 +35,42 @@
 
             <div class="row">
                 <!-- Mesa -->
-                <div class="col-md-6">
-
-                    <label class="form-label">
-                        Mesa
-                    </label>
-                    <select class="form-select"
-                            @bind="IdMesaSeleccionada">
-
-                        <option value="0">
-                            Seleccione una mesa
-                        </option>
-                        @foreach (var mesa in MesasDisponibles)
-                        {
-                            <option value="@mesa.IdMesa">
-
-                                Mesa @mesa.NumeroMesa
-                            </option>
-                        }
-                    </select>
-                </div>
-
+                @if (MostrarMesa)
+                {
+                 <div class="col-md-6">
+                 <label class="form-label">Mesa</label>
+                 <select class="form-select"
+                 @bind="IdMesaSeleccionada"
+                 @bind:after="MesaSeleccionada">
+                 <option value="0">
+                 Seleccione una mesa
+                 </option>
+                 @foreach(var mesa in MesasDisponibles)
+                 {
+                 <option value="@mesa.IdMesa">
+                    Mesa @mesa.NumeroMesa
+                 </option>
+                 }
+                 </select>
+                 </div>
+                }
                 <!-- Cliente -->
                 <div class="col-md-6">
-
                     <label class="form-label">
                         Cliente
                     </label>
                     <select class="form-select"
-                            @bind="IdClienteSeleccionado">
-
-                        <option value="0">
-                            Seleccione un cliente
-                        </option>
-                        @foreach (var cliente in Clientes)
-                        {
-                            <option value="@cliente.IdUsuario">
-
-                                @cliente.Nombre @cliente.Apellido
-                            </option>
-                        }
+                    @bind="IdClienteSeleccionado"
+                    @bind:after="SeleccionarCliente">
+                    <option value="0">
+                        Seleccione un cliente
+                    </option>
+                    @foreach (var cliente in Clientes)
+                    {
+                    <option value="@cliente.IdUsuario">
+                    @cliente.Nombre @cliente.Apellido
+                    </option>
+                    }
                     </select>
                 </div>
             </div>
@@ -176,6 +172,9 @@ else if (!string.IsNullOrWhiteSpace(DiaSeleccionado))
 
 @code
 {
+    private bool ClienteTienePedidoActivo = false;
+    private bool MostrarMesa = false;
+    private bool PuedeRealizarPedido = false;
     private bool ModoPedido = false;
     private List<DetallePedido> PedidoTemporal = new();
     private List<Producto> Productos = new();
@@ -228,6 +227,16 @@ else if (!string.IsNullOrWhiteSpace(DiaSeleccionado))
 
     private async Task ConfirmarPedido()
     {
+        if (IdMesaSeleccionada == 0)
+        {
+            Mensaje = "Seleccione una mesa.";
+             return;
+        }
+        if (IdClienteSeleccionado == 0)
+        {
+            Mensaje = "Seleccione un cliente.";
+            return;
+        }
         if (PedidoTemporal.Count == 0)
         {
             Mensaje = "Debe agregar al menos un plato.";
@@ -253,12 +262,77 @@ else if (!string.IsNullOrWhiteSpace(DiaSeleccionado))
             Mensaje = "No existe un menú registrado para ese día.";
         }
     }
-    protected override async Task OnInitializedAsync()
+protected override async Task OnInitializedAsync()
 {
     MesasDisponibles =
         await PedidoService.ObtenerMesasDisponibles();
 
     Clientes =
         await PedidoService.ObtenerClientes();
+}
+private async Task SeleccionarCliente()
+{
+    Mensaje = "";
+
+    PuedeRealizarPedido = false;
+
+    MostrarMesa = false;
+
+    IdMesaSeleccionada = 0;
+
+    if (IdClienteSeleccionado == 0)
+        return;
+
+    //--------------------------------------------
+    // 1. Buscar reservas en curso
+    //--------------------------------------------
+    var mesasReserva =
+        await PedidoService.ObtenerMesasReservadasCliente(IdClienteSeleccionado);
+
+    if (mesasReserva.Any())
+    {
+        MesasDisponibles = mesasReserva;
+
+        MostrarMesa = true;
+
+        PuedeRealizarPedido = true;
+
+        Mensaje = "El cliente posee una reserva en curso.";
+
+        return;
+    }
+
+    //--------------------------------------------
+    // 2. Buscar pedidos pendientes
+    //--------------------------------------------
+    var mesasPedido =
+        await PedidoService.ObtenerMesasDelCliente(IdClienteSeleccionado);
+
+    if (mesasPedido.Any())
+    {
+        MesasDisponibles = mesasPedido;
+
+        MostrarMesa = true;
+
+        PuedeRealizarPedido = true;
+
+        Mensaje = "El cliente posee pedidos pendientes.";
+
+        return;
+    }
+
+    //--------------------------------------------
+    // 3. Cliente nuevo
+    //--------------------------------------------
+    MesasDisponibles =
+        await PedidoService.ObtenerMesasDisponibles();
+
+    MostrarMesa = true;
+}
+private Task MesaSeleccionada()
+{
+    PuedeRealizarPedido = IdMesaSeleccionada != 0;
+
+    return Task.CompletedTask;
 }
 }
