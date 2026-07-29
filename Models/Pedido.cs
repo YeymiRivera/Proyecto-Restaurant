@@ -16,10 +16,6 @@ public partial class Pedido
     [Column("fecha", TypeName = "timestamp without time zone")]
     public DateTime Fecha { get; set; }
 
-    [Column("tipo_pedido")]
-    [StringLength(20)]
-    public string TipoPedido { get; set; } = null!;
-
     [Column("estado")]
     [StringLength(20)]
     public string Estado { get; set; } = null!;

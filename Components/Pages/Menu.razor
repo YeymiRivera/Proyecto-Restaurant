@@ -1,9 +1,32 @@
 @page "/menudia"
 @using proyecto.Models
 @using proyecto.Services
+@inject PedidoService PedidoService
 @inject MenuService MenuService
 @rendermode InteractiveServer
 <h3 class="mb-4">Menú del Día</h3>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    @if(!ModoPedido)
+    {
+        <button class="btn btn-success"
+                @onclick="ActivarPedido">
+             Realizar Pedido
+        </button>
+    }
+    else
+    {
+        <div>
+            <button class="btn btn-secondary me-2"
+                    @onclick="CancelarPedido">
+                Cancelar
+            </button>
+            <button class="btn btn-primary"
+        @onclick="ConfirmarPedido">
+    Confirmar Pedido
+</button>
+        </div>
+    }
+</div>
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <label class="form-label">
@@ -24,6 +47,15 @@
         </select>
     </div>
 </div>
+@if(ModoPedido)
+{
+    <div class="alert alert-primary">
+
+        Productos agregados:
+        <strong>@PedidoTemporal.Count</strong>
+
+    </div>
+}
 
 @if (!string.IsNullOrWhiteSpace(Mensaje))
 {
@@ -31,7 +63,6 @@
         @Mensaje
     </div>
 }
-
 @if (Productos.Count > 0)
 {
     <div class="row">
@@ -62,11 +93,14 @@
                         </p>
                     </div>
                     <div class="card-footer bg-white">
-
-                        <h4 class="text-success">
-                            @producto.Precio.ToString("C")
-                        </h4>
-
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="text-success mb-0">
+                                @producto.Precio.ToString("C")
+                            </h4>
+                         @if(ModoPedido)
+                         {<button class="btn btn-success btn-sm"
+                            @onclick="() => AgregarAlPedido(producto)">Agregar</button>}
+                        </div>
                     </div>
 
                 </div>
@@ -88,12 +122,11 @@ else if (!string.IsNullOrWhiteSpace(DiaSeleccionado))
 
 @code
 {
+    private bool ModoPedido = false;
+    private List<DetallePedido> PedidoTemporal = new();
     private List<Producto> Productos = new();
-
     private string DiaSeleccionado = "";
-
     private string Mensaje = "";
-
     private List<string> DiasDisponibles = new()
     {
         "Lunes",
@@ -102,6 +135,54 @@ else if (!string.IsNullOrWhiteSpace(DiaSeleccionado))
         "Jueves",
         "Viernes"
     };
+    private void ActivarPedido()
+    {
+    ModoPedido = true;
+    }
+    private void CancelarPedido()
+    {
+    PedidoTemporal.Clear();
+    ModoPedido = false;
+    }
+    private void AgregarAlPedido(Producto producto)
+    {
+        var detalle = PedidoTemporal
+            .FirstOrDefault(p => p.IdProducto == producto.IdProducto);
+
+        if (detalle != null)
+        {
+            detalle.Cantidad++;
+            detalle.Subtotal =
+                detalle.Cantidad * detalle.PrecioUnitario;
+        }
+        else
+        {
+            PedidoTemporal.Add(new DetallePedido
+            {
+                IdProducto = producto.IdProducto,
+                IdProductoNavigation = producto,
+                Cantidad = 1,
+                PrecioUnitario = producto.Precio,
+                Subtotal = producto.Precio
+            });
+        }
+    }
+
+    private async Task ConfirmarPedido()
+    {
+        if (PedidoTemporal.Count == 0)
+        {
+            Mensaje = "Debe agregar al menos un plato.";
+            return;
+        }
+        await PedidoService.CrearPedido(PedidoTemporal);
+
+        PedidoTemporal.Clear();
+
+        ModoPedido = false;
+
+        Mensaje = "Pedido registrado correctamente.";
+    }
 
     private async Task CargarMenu()
     {
