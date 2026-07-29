@@ -1,14 +1,18 @@
 using Microsoft.EntityFrameworkCore;
 using proyecto.Models;
+using Microsoft.AspNetCore.Components.Authorization;
+using System.Security.Claims; 
 
 namespace proyecto.Services
 {
     public class PedidoService
     {
         private readonly RhdbContext _context;
-        public PedidoService(RhdbContext context)
+         private readonly AuthenticationStateProvider _auth;
+        public PedidoService(RhdbContext context, AuthenticationStateProvider auth)
         {
             _context = context;
+            _auth = auth;
         }
         //=====================================================
         // PEDIDOS
@@ -38,11 +42,24 @@ namespace proyecto.Services
                 .OrderBy(m => m.NumeroMesa)
                 .ToListAsync();
         }
+         //=====================================================
+        // Clientes
+        //=====================================================
+        public async Task<List<Usuario>> ObtenerClientes()
+{
+    return await _context.Usuarios
+        .Where(u => u.IdRol == 2)
+        .OrderBy(u => u.Nombre)
+        .ToListAsync();
+}
         //=====================================================
         // CREAR PEDIDO
         //=====================================================
-        public async Task CrearPedido(List<DetallePedido> detalles)
+        public async Task CrearPedido(List<DetallePedido> detalles,int idMesa,int idCliente)
         {
+            var authState = await _auth.GetAuthenticationStateAsync();
+
+            var user = authState.User;
             using var transaccion =await _context.Database.BeginTransactionAsync();
             try
             {
@@ -50,8 +67,8 @@ namespace proyecto.Services
                 pedido.Fecha = DateTime.Now;
                 pedido.Estado = "Pendiente";
                 pedido.Total = 0;
-                pedido.IdUsuario = 1; // Usuario por defecto
-                pedido.IdMesa = 1; // Mesa por defecto
+                pedido.IdUsuario = idCliente;              
+                pedido.IdMesa = idMesa;
                 _context.Pedidos.Add(pedido);
                 await _context.SaveChangesAsync();
                 decimal total = 0;

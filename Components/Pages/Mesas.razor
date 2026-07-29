@@ -1,0 +1,194 @@
+@page "/mesas"
+@using proyecto.Models
+@using proyecto.Services
+@inject MesaService MesaService
+@rendermode InteractiveServer
+<h3>Gestión de Mesas</h3>
+<div class="card shadow-sm p-4 mb-4">
+    <h5>@(Mesa.IdMesa == 0 ? "Nueva Mesa" : "Editar Mesa")</h5>
+    <div class="row">
+        <div class="col-md-4">
+            <label class="form-label">
+                Número de Mesa
+            </label>
+            <InputNumber class="form-control"
+                         @bind-Value="Mesa.NumeroMesa" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">
+                Capacidad
+            </label>
+            <InputNumber class="form-control"
+                         @bind-Value="Mesa.Capacidad" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">
+                Estado
+            </label>
+            <InputSelect class="form-select"
+                         @bind-Value="Mesa.Estado">
+                <option value="Disponible">
+                    Disponible
+                </option>
+                <option value="Reservada">
+                    Reservada
+                </option>
+            </InputSelect>
+        </div>
+    </div>
+    <div class="mt-4">
+        <button class="btn btn-success"
+                @onclick="GuardarMesa">
+
+            @(Mesa.IdMesa == 0 ? "Registrar" : "Actualizar")
+        </button>
+        <button class="btn btn-secondary ms-2"
+                @onclick="Limpiar">
+
+            Cancelar
+        </button>
+    </div>
+    @if(!string.IsNullOrWhiteSpace(Mensaje))
+    {
+        <div class="alert alert-info mt-3">
+            @Mensaje
+        </div>
+    }
+</div>
+<div class="card shadow-sm p-4">
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input class="form-control"
+                   placeholder="Buscar mesa..."
+                   @bind="Busqueda"
+                   @bind:event="oninput"/>
+        </div>
+    </div>
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>N° Mesa</th>
+                <th>Capacidad</th>
+                <th>Estado</th>
+                <th width="170">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var mesa in MesasFiltradas)
+            {
+                <tr>
+                    <td>@mesa.NumeroMesa</td>
+                    <td>@mesa.Capacidad Personas</td>
+                    <td>
+                        @if(mesa.Estado=="Disponible")
+                        {
+                            <span class="badge bg-success">
+                                Disponible
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-warning text-dark">
+                                Reservada
+                            </span>
+                        }
+                    </td>
+                    <td>
+                        <button class="btn btn-primary btn-sm me-2"
+                                @onclick="() => EditarMesa(mesa)">
+                            Editar
+                        </button>
+                        <button class="btn btn-danger btn-sm"
+                                @onclick="() => EliminarMesa(mesa.IdMesa)">
+                            Eliminar
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code{
+
+    private List<Mesa> mesas = new();
+
+    private Mesa Mesa = new();
+
+    private string Busqueda = "";
+
+    private string Mensaje = "";
+
+    IEnumerable<Mesa> MesasFiltradas =>
+        mesas.Where(m =>
+            m.NumeroMesa.ToString()
+            .Contains(Busqueda));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarMesas();
+        Limpiar();
+    }
+
+    private async Task CargarMesas()
+    {
+        mesas = await MesaService.ObtenerMesas();
+    }
+
+    private void Limpiar()
+    {
+        Mesa = new Mesa()
+        {
+            Estado = "Disponible",
+            Capacidad = 4
+        };
+
+        Mensaje = "";
+    }
+
+    private async Task GuardarMesa()
+    {
+        ResultadoOperacion resultado;
+
+        if(Mesa.IdMesa == 0)
+        {
+            resultado = await MesaService.AgregarMesa(Mesa);
+        }
+        else
+        {
+            resultado = await MesaService.ActualizarMesa(Mesa);
+        }
+
+        Mensaje = resultado.Mensaje;
+
+        if(resultado.Exito)
+        {
+            await CargarMesas();
+            Limpiar();
+        }
+    }
+
+    private void EditarMesa(Mesa mesa)
+    {
+        Mesa = new Mesa
+        {
+            IdMesa = mesa.IdMesa,
+            NumeroMesa = mesa.NumeroMesa,
+            Capacidad = mesa.Capacidad,
+            Estado = mesa.Estado
+        };
+    }
+    private async Task EliminarMesa(int idMesa)
+    {
+        var resultado = await MesaService.EliminarMesa(idMesa);
+
+        Mensaje = resultado.Mensaje;
+
+        if(resultado.Correcto)
+        {
+            await CargarMesas();
+            Limpiar();
+        }
+    }
+
+}

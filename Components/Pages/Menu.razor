@@ -27,6 +27,60 @@
         </div>
     }
 </div>
+@if (ModoPedido)
+{
+    <div class="card shadow-sm mb-4">
+
+        <div class="card-body">
+
+            <div class="row">
+                <!-- Mesa -->
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Mesa
+                    </label>
+                    <select class="form-select"
+                            @bind="IdMesaSeleccionada">
+
+                        <option value="0">
+                            Seleccione una mesa
+                        </option>
+                        @foreach (var mesa in MesasDisponibles)
+                        {
+                            <option value="@mesa.IdMesa">
+
+                                Mesa @mesa.NumeroMesa
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Cliente -->
+                <div class="col-md-6">
+
+                    <label class="form-label">
+                        Cliente
+                    </label>
+                    <select class="form-select"
+                            @bind="IdClienteSeleccionado">
+
+                        <option value="0">
+                            Seleccione un cliente
+                        </option>
+                        @foreach (var cliente in Clientes)
+                        {
+                            <option value="@cliente.IdUsuario">
+
+                                @cliente.Nombre @cliente.Apellido
+                            </option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 <div class="card shadow-sm mb-4">
     <div class="card-body">
         <label class="form-label">
@@ -127,6 +181,10 @@ else if (!string.IsNullOrWhiteSpace(DiaSeleccionado))
     private List<Producto> Productos = new();
     private string DiaSeleccionado = "";
     private string Mensaje = "";
+    private List<Mesa> MesasDisponibles = new();
+    private List<Usuario> Clientes = new();
+    private int IdMesaSeleccionada;
+    private int IdClienteSeleccionado;
     private List<string> DiasDisponibles = new()
     {
         "Lunes",
@@ -175,7 +233,7 @@ else if (!string.IsNullOrWhiteSpace(DiaSeleccionado))
             Mensaje = "Debe agregar al menos un plato.";
             return;
         }
-        await PedidoService.CrearPedido(PedidoTemporal);
+        await PedidoService.CrearPedido(PedidoTemporal,IdMesaSeleccionada,IdClienteSeleccionado);
 
         PedidoTemporal.Clear();
 
@@ -195,4 +253,12 @@ else if (!string.IsNullOrWhiteSpace(DiaSeleccionado))
             Mensaje = "No existe un menú registrado para ese día.";
         }
     }
+    protected override async Task OnInitializedAsync()
+{
+    MesasDisponibles =
+        await PedidoService.ObtenerMesasDisponibles();
+
+    Clientes =
+        await PedidoService.ObtenerClientes();
+}
 }

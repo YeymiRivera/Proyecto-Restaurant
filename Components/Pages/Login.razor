@@ -90,7 +90,7 @@
 
             customProvider.MarkUserAsAuthenticated(
                 usuario.Email,
-                usuario.IdRol.ToString(),usuario.Nombre);
+                usuario.IdRol.ToString(),usuario.Nombre,usuario.IdUsuario.ToString());
 
             // 5. Redirigir al inicio
             NavigationManager.NavigateTo("/");
