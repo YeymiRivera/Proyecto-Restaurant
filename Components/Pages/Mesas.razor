@@ -7,33 +7,21 @@
 <div class="card shadow-sm p-4 mb-4">
     <h5>@(Mesa.IdMesa == 0 ? "Nueva Mesa" : "Editar Mesa")</h5>
     <div class="row">
-        <div class="col-md-4">
-            <label class="form-label">
-                Número de Mesa
-            </label>
-            <InputNumber class="form-control"
-                         @bind-Value="Mesa.NumeroMesa" />
-        </div>
-        <div class="col-md-4">
+        <div class="col-md-6"> 
+            <label class="form-label"> Número de Mesa </label> 
+            @if (Mesa.IdMesa == 0) 
+            { <!-- Al crear: se puede introducir el número --> 
+            <InputNumber class="form-control" @bind-Value="Mesa.NumeroMesa" /> 
+            } 
+            else 
+            { <!-- Al editar: el número es fijo --> 
+            <input class="form-control" value="@Mesa.NumeroMesa" disabled /> 
+            } 
             <label class="form-label">
                 Capacidad
             </label>
             <InputNumber class="form-control"
                          @bind-Value="Mesa.Capacidad" />
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">
-                Estado
-            </label>
-            <InputSelect class="form-select"
-                         @bind-Value="Mesa.Estado">
-                <option value="Disponible">
-                    Disponible
-                </option>
-                <option value="Reservada">
-                    Reservada
-                </option>
-            </InputSelect>
         </div>
     </div>
     <div class="mt-4">
@@ -84,6 +72,12 @@
                         {
                             <span class="badge bg-success">
                                 Disponible
+                            </span>
+                        }
+                        else if (mesa.Estado=="Ocupada")
+                        {
+                            <span class="badge bg-danger">
+                                Ocupada
                             </span>
                         }
                         else
@@ -167,7 +161,6 @@
             Limpiar();
         }
     }
-
     private void EditarMesa(Mesa mesa)
     {
         Mesa = new Mesa

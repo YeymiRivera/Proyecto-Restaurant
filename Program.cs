@@ -12,6 +12,7 @@ builder.Services.AddScoped<ProductoService>();
 builder.Services.AddScoped<PedidoService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<MesaService>();
+builder.Services.AddScoped<ReservaService>();
 // Registrar el DbContext
 builder.Services.AddDbContextFactory<RhdbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));

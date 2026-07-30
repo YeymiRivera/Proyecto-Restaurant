@@ -1,0 +1,417 @@
+@page "/reservas"
+@using proyecto.Models
+@using proyecto.Services
+@inject ReservaService ReservaService
+
+@rendermode InteractiveServer
+
+<h3>Gestión de Reservas</h3>
+
+<div class="card shadow-sm p-4 mb-4">
+
+    <h5>
+        @(Reserva.IdReserva == 0 ?
+        "Nueva Reserva" :
+        "Editar Reserva")
+    </h5>
+    <div class="row">
+
+        <div class="col-md-4">
+            <label class="form-label">
+                Cliente
+            </label>
+
+            <InputSelect class="form-select"
+                        @bind-Value="Reserva.IdUsuario">
+
+                <option value="0">
+                    Seleccione cliente
+                </option>
+                @foreach(var cliente in Clientes)
+                {
+                    <option value="@cliente.IdUsuario">
+                        @cliente.Nombre @cliente.Apellido
+                    </option>
+                }
+
+            </InputSelect>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">
+                Mesa
+            </label>
+
+            <InputSelect class="form-select"
+                        @bind-Value="IdMesa">
+
+                <option value="0">
+                    Seleccione mesa
+                </option>
+
+                @foreach(var mesa in Mesas)
+                {
+                    <option value="@mesa.IdMesa">
+                        Mesa @mesa.NumeroMesa
+                    </option>
+                }
+
+            </InputSelect>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">
+                Personas
+            </label>
+
+            <InputNumber class="form-control"
+                        @bind-Value="Reserva.CantidadPersonas" />
+        </div>
+
+    </div>
+
+    <div class="row mt-3">
+
+        <div class="col-md-6">
+            <label class="form-label">
+                Fecha
+            </label>
+
+            <InputDate class="form-control"@bind-Value="Reserva.Fecha"
+            @bind-Value:after="ActualizarMesas" />
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">
+                Hora
+            </label>
+
+            <InputDate class="form-control"
+                       Type="InputDateType.Time"
+                       @bind-Value="HoraReservaDateTime" />
+        </div>
+
+    </div>
+
+            <div class="mt-4">
+
+                <button class="btn btn-success"
+                        @onclick="GuardarReserva">
+
+                    @(Reserva.IdReserva == 0 ?
+                    "Registrar" :
+                    "Actualizar")
+                </button>
+
+                <button class="btn btn-secondary ms-2"
+                        @onclick="Limpiar">
+
+                    Cancelar
+                </button>
+
+            </div>
+
+            @if(!string.IsNullOrWhiteSpace(Mensaje))
+            {
+                <div class="alert alert-info mt-3">
+                    @Mensaje
+                </div>
+            }
+
+        </div>
+        <div class="card shadow-sm p-4">
+
+            <table class="table table-striped">
+
+                <thead>
+
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Mesa</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Personas</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+        @foreach(var reserva in Reservas)
+        {
+            <tr>
+
+                <td>
+                    @reserva.IdUsuarioNavigation.Nombre
+                    @reserva.IdUsuarioNavigation.Apellido
+                </td>
+
+                <td>
+                    @if (reserva.DetalleReservas.Any())
+                    {
+                        <span>
+                            Mesa @reserva.DetalleReservas.First().IdMesaNavigation.NumeroMesa
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="text-danger">
+                            Sin mesa
+                        </span>
+                    }
+                </td>
+
+                <td>@reserva.Fecha</td>
+
+                <td>@reserva.Hora</td>
+
+                <td>@reserva.CantidadPersonas</td>
+
+
+                
+                <td>
+
+                    @if (reserva.Estado == "Pendiente")
+                    {
+                        <span class="badge bg-warning text-dark">
+                            Pendiente
+                        </span>
+                    }
+                    else if (reserva.Estado == "En Curso")
+                    {
+                        <span class="badge bg-info">
+                            En Curso
+                        </span>
+                    }
+                    else if (reserva.Estado == "Finalizada")
+                    {
+                        <span class="badge bg-success">
+                            Finalizada
+                        </span>
+                    }
+                    else if (reserva.Estado == "Cancelada")
+                    {
+                        <span class="badge bg-danger">
+                            Cancelada
+                        </span>
+                    }
+
+                </td>
+
+                <td>
+
+             @if (reserva.Estado == "Pendiente")
+                {
+                    <button class="btn btn-warning btn-sm me-1"
+                            @onclick="() => EditarReserva(reserva)">
+                        Editar
+                    </button>
+
+                    <button class="btn btn-danger btn-sm me-1"
+                            @onclick="() => CancelarReserva(reserva.IdReserva)">
+                        Cancelar
+                    </button>
+
+                    <button class="btn btn-info btn-sm me-1"
+                            @onclick='() => CambiarEstado(reserva.IdReserva, "En Curso")'>
+                        En Curso
+                    </button>
+
+                    <button class="btn btn-success btn-sm me-1"
+                            @onclick='() => CambiarEstado(reserva.IdReserva, "Finalizada")'>
+                        Finalizar
+                    </button>
+                }
+                else if (reserva.Estado == "En Curso")
+                {
+                    <button class="btn btn-success btn-sm me-1"
+                            @onclick='() => CambiarEstado(reserva.IdReserva, "Finalizada")'>
+                        Finalizar
+                    </button>
+                }
+
+
+            </td>
+
+            </tr>
+        }
+
+        </tbody>
+
+    </table>
+
+</div>
+
+@code {
+
+    private List<Reserva> Reservas = new();
+
+    private List<Usuario> Clientes = new();
+
+    private List<Mesa> Mesas = new();
+
+    private Reserva Reserva = new();
+
+    private int IdMesa;
+
+    private string Mensaje = "";
+
+    private DateTime HoraReservaDateTime =
+        DateTime.Today.AddHours(12);
+
+    protected override async Task OnInitializedAsync()
+    {
+       Limpiar();
+       await CargarDatos();
+    }
+    private async Task ActualizarMesas()
+    {
+    Mesas = await ReservaService.ObtenerMesas(Reserva.Fecha);
+
+    if (IdMesa != 0 &&
+        !Mesas.Any(m => m.IdMesa == IdMesa))
+    {
+        IdMesa = 0;
+    }
+    }
+
+    private async Task CargarDatos()
+    {
+        await ReservaService.VerificarReservasVencidas();
+
+        await ReservaService.CorregirEstadosMesas();
+
+        Reservas = await ReservaService.ObtenerReservas();
+
+        Clientes = await ReservaService.ObtenerClientes();
+
+        Mesas = await ReservaService.ObtenerMesas(Reserva.Fecha,Reserva.IdReserva);
+ }
+    private void Limpiar()
+    {
+        Reserva = new Reserva
+        {
+            Fecha = DateOnly.FromDateTime(DateTime.Today),
+            Hora = TimeOnly.FromDateTime(DateTime.Now),
+            Estado = "Pendiente"
+        };
+
+        HoraReservaDateTime =
+            DateTime.Today.AddHours(12);
+
+        IdMesa = 0;
+
+        Mensaje = "";
+    }
+
+        private async Task GuardarReserva()
+        {
+            if (Reserva.IdUsuario == 0)
+            {
+                Mensaje = "Seleccione un cliente.";
+                return;
+            }
+
+            if (IdMesa == 0)
+            {
+                Mensaje = "Seleccione una mesa.";
+                return;
+            }
+
+            if (Reserva.CantidadPersonas <= 0)
+            {
+                Mensaje = "La cantidad de personas debe ser mayor a cero.";
+                return;
+            }
+
+            Reserva.Hora =
+                TimeOnly.FromDateTime(HoraReservaDateTime);
+
+            DateTime fechaHoraReserva =
+                Reserva.Fecha.ToDateTime(Reserva.Hora);
+
+            if (fechaHoraReserva < DateTime.Now)
+            {
+                Mensaje =
+                    "No puede registrar una reserva en una fecha u hora pasada.";
+                return;
+            }
+
+            ResultadoOperacion resultado;
+
+            if (Reserva.IdReserva == 0)
+            {
+                resultado =
+                    await ReservaService.CrearReserva(
+                        Reserva,
+                        IdMesa);
+            }
+            else
+            {
+                resultado =
+                    await ReservaService.ActualizarReserva(
+                        Reserva,
+                        IdMesa);
+            }
+
+            Mensaje = resultado.Mensaje;
+            Console.WriteLine(resultado.Mensaje);
+
+            if (resultado.Exito)
+            {
+                await CargarDatos();
+                Limpiar();
+            }
+        }
+
+    private void EditarReserva(Reserva reserva)
+    {
+        Reserva = new Reserva
+        {
+            IdReserva = reserva.IdReserva,
+            Fecha = reserva.Fecha,
+            Hora = reserva.Hora,
+            CantidadPersonas = reserva.CantidadPersonas,
+            Estado = reserva.Estado,
+            IdUsuario = reserva.IdUsuario
+        };
+
+        HoraReservaDateTime =
+            reserva.Fecha.ToDateTime(reserva.Hora);
+
+        IdMesa =
+            reserva.DetalleReservas
+            .FirstOrDefault()?.IdMesa ?? 0;
+    }
+
+    private async Task CancelarReserva(int id)
+{
+    var resultado =
+        await ReservaService.CancelarReserva(id);
+
+    Mensaje = resultado.Mensaje;
+
+    if (resultado.Exito)
+    {
+        await CargarDatos();
+        Limpiar();
+    }
+}
+   private async Task CambiarEstado(int id,string estado)
+{
+    var resultado =
+        await ReservaService.CambiarEstado(
+            id,
+            estado);
+
+    Mensaje = resultado.Mensaje;
+
+    if (resultado.Exito)
+    {
+        await CargarDatos();
+        Limpiar();
+    }
+}
+}
