@@ -1,0 +1,158 @@
+@page "/gestion-pedidos"
+
+@using proyecto.Models
+@using proyecto.Services
+
+@inject PedidoService PedidoService
+
+@rendermode InteractiveServer
+
+<h3>Gestión de Pedidos</h3>
+
+<div class="card shadow-sm p-4">
+
+    <table class="table table-striped">
+
+        <thead>
+            <tr>
+                <th>Cliente</th>
+                <th>Mesa</th>
+                <th>Fecha</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @foreach (var pedido in Pedidos)
+            {
+                <tr>
+
+                    <td>
+                        @pedido.IdUsuarioNavigation.Nombre
+                        @pedido.IdUsuarioNavigation.Apellido
+                    </td>
+
+                    <td>
+                        Mesa @pedido.IdMesaNavigation?.NumeroMesa
+                    </td>
+
+                    <td>
+                        @pedido.Fecha
+                    </td>
+
+                    <td>
+                        Bs. @pedido.Total
+                    </td>
+
+                    <td>
+
+                        @if (pedido.Estado == "Pendiente")
+                        {
+                            <span class="badge bg-warning text-dark">
+                                Pendiente
+                            </span>
+                        }
+                        else if (pedido.Estado == "Preparando")
+                        {
+                            <span class="badge bg-info">
+                                Preparando
+                            </span>
+                        }
+                        else if (pedido.Estado == "Entregado")
+                        {
+                            <span class="badge bg-success">
+                                Entregado
+                            </span>
+                        }
+                        else if (pedido.Estado == "Pagado")
+                        {
+                            <span class="badge bg-secondary">
+                                Pagado
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-dark">
+                                @pedido.Estado
+                            </span>
+                        }
+
+                    </td>
+
+                    <td>
+
+                        @if (pedido.Estado == "Pendiente")
+                        {
+                            <button class="btn btn-primary btn-sm me-1"
+                                    @onclick='() => CambiarEstado(pedido.IdPedido, "Preparando")'>
+                                Preparando
+                            </button>
+
+                            <button class="btn btn-danger btn-sm"
+                                    @onclick='() => EliminarPedido(pedido.IdPedido)'>
+                                Eliminar
+                            </button>
+                        }
+                        else if (pedido.Estado == "Preparando")
+                        {
+                            <button class="btn btn-success btn-sm"
+                                    @onclick='() => CambiarEstado(pedido.IdPedido, "Entregado")'>
+                                Entregado
+                            </button>
+                        }
+                        else if (pedido.Estado == "Entregado")
+                        {
+                            <button class="btn btn-dark btn-sm"
+                                    @onclick='() => CambiarEstado(pedido.IdPedido, "Pagado")'>
+                                Pagado
+                            </button>
+                        }
+                        else if (pedido.Estado == "Pagado")
+                        {
+                            <span class="text-muted">
+                                Sin acciones
+                            </span>
+                        }
+
+                    </td>
+
+                </tr>
+            }
+
+        </tbody>
+
+    </table>
+
+</div>
+
+@code {
+
+    private List<Pedido> Pedidos = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Pedidos = await PedidoService.ObtenerPedidos();
+    }
+
+    private async Task CambiarEstado(
+        int idPedido,
+        string estado)
+    {
+        await PedidoService.CambiarEstadoPedido(
+            idPedido,
+            estado);
+
+        Pedidos = await PedidoService.ObtenerPedidos();
+    }
+
+    private async Task EliminarPedido(int idPedido)
+    {
+        await PedidoService.EliminarPedido(idPedido);
+
+        Pedidos = await PedidoService.ObtenerPedidos();
+    }
+
+}

@@ -1,0 +1,151 @@
+@page "/mispedidos"
+
+@using proyecto.Models
+@using proyecto.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+
+@attribute [Authorize(Roles = "2")]
+
+@inject PedidoService PedidoService
+@inject AuthenticationStateProvider AuthStateProvider
+
+@rendermode InteractiveServer
+
+<h3 class="mb-4">Mis Pedidos</h3>
+
+@if (Cargando)
+{
+    <div class="alert alert-info">
+        Cargando pedidos...
+    </div>
+}
+else if (Pedidos.Count == 0)
+{
+    <div class="alert alert-warning">
+        Aún no tienes pedidos registrados.
+    </div>
+}
+else
+{
+    <div class="list-group shadow-sm">
+
+        @foreach (var pedido in Pedidos)
+        {
+            <div class="list-group-item">
+
+                <div class="d-flex justify-content-between align-items-start"
+                     style="cursor:pointer;"
+                     @onclick="() => AlternarDetalle(pedido.IdPedido)">
+
+                    <div>
+                        <h5 class="mb-1">
+                            Pedido #@pedido.IdPedido
+                        </h5>
+
+                        <small class="text-muted">
+                            @pedido.Fecha.ToString("dd/MM/yyyy HH:mm")
+
+                            @if (pedido.IdMesaNavigation != null)
+                            {
+                                <span>
+                                    · Mesa @pedido.IdMesaNavigation.NumeroMesa
+                                </span>
+                            }
+                        </small>
+                    </div>
+
+                    <div class="text-end">
+
+                        <span class="badge @ClaseEstado(pedido.Estado) mb-1">
+                            @pedido.Estado
+                        </span>
+
+                        <h5 class="text-success mb-0">
+                            @pedido.Total.ToString("C")
+                        </h5>
+
+                    </div>
+
+                </div>
+
+                @if (PedidoExpandidoId == pedido.IdPedido)
+                {
+                    <hr />
+
+                    <ul class="list-unstyled mb-0">
+
+                        @foreach (var detalle in pedido.DetallePedidos)
+                        {
+                            <li class="d-flex justify-content-between py-1">
+
+                                <span>
+                                    @detalle.Cantidad x
+                                    @detalle.IdProductoNavigation?.Nombre
+                                </span>
+
+                                <span>
+                                    @detalle.Subtotal.ToString("C")
+                                </span>
+
+                            </li>
+                        }
+
+                    </ul>
+                }
+
+            </div>
+        }
+
+    </div>
+}
+
+@code {
+
+    private List<Pedido> Pedidos = new();
+
+    private bool Cargando = true;
+
+    private int? PedidoExpandidoId = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState =
+            await AuthStateProvider.GetAuthenticationStateAsync();
+
+        var idClaim =
+            authState.User.FindFirst(ClaimTypes.NameIdentifier);
+
+        if (idClaim != null &&
+            int.TryParse(idClaim.Value, out int idCliente))
+        {
+            Pedidos =
+                await PedidoService.ObtenerPedidosCliente(idCliente);
+        }
+
+        Cargando = false;
+    }
+
+    private void AlternarDetalle(int idPedido)
+    {
+        PedidoExpandidoId =
+            PedidoExpandidoId == idPedido
+            ? null
+            : idPedido;
+    }
+
+    private string ClaseEstado(string estado)
+    {
+        return estado switch
+        {
+            "Pendiente" => "bg-warning text-dark",
+            "Preparando" => "bg-primary",
+            "Entregado" => "bg-info text-dark",
+            "Pagado" => "bg-success",
+            "Cancelado" => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+}

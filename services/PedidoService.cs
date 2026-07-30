@@ -241,5 +241,15 @@ public async Task<List<Mesa>> ObtenerMesasReservadasCliente(int idCliente)
 
             await _context.SaveChangesAsync();
         }
+                public async Task<List<Pedido>> ObtenerPedidosCliente(int idCliente)
+        {
+            return await _context.Pedidos
+                .Where(p => p.IdUsuario == idCliente)
+                .Include(p => p.IdMesaNavigation)
+                .Include(p => p.DetallePedidos)
+                    .ThenInclude(d => d.IdProductoNavigation)
+                .OrderByDescending(p => p.Fecha)
+                .ToListAsync();
+        }
     }
 }
